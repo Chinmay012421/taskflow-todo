@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="TaskFlow — your personal productivity space.">
+  <title>TaskFlow — Personal Task Manager</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <main id="authView" class="auth-layout">
+    <section class="auth-brand">
+      <a href="/" class="brand"><span class="brand-icon">✓</span><span>TaskFlow</span></a>
+      <div class="brand-message">
+        <span class="eyebrow">YOUR SPACE. YOUR PACE.</span>
+        <h1>Make room for<br><span>what matters.</span></h1>
+        <p>Organise your tasks, focus on your priorities, and keep moving forward.</p>
+        <div class="feature-line"><span>✓</span> Your own private task space</div>
+        <div class="feature-line"><span>✓</span> Priorities, categories and deadlines</div>
+        <div class="feature-line"><span>✓</span> Synced to your account</div>
+      </div>
+      <p class="muted small">A little progress, every day.</p>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-brand brand"><span class="brand-icon">✓</span><span>TaskFlow</span></div>
+        <span class="eyebrow">WELCOME TO TASKFLOW</span>
+        <h2 id="authHeading">Welcome back</h2>
+        <p id="authSubheading" class="muted">Sign in to continue to your workspace.</p>
+        <div class="auth-tabs">
+          <button id="loginTab" class="auth-tab active" type="button">Sign in</button>
+          <button id="signupTab" class="auth-tab" type="button">Create account</button>
+        </div>
+        <form id="authForm" class="form-stack">
+          <div id="nameGroup" class="field hidden">
+            <label for="authName">Your name</label>
+            <input id="authName" type="text" maxlength="80" autocomplete="name" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label for="authEmail">Email address</label>
+            <input id="authEmail" type="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label for="authPassword">Password</label>
+            <input id="authPassword" type="password" required minlength="8" autocomplete="current-password" placeholder="At least 8 characters">
+          </div>
+          <button id="authSubmit" class="btn btn-primary full" type="submit">Sign in <span>→</span></button>
+        </form>
+        <button id="resetPassword" class="text-button" type="button">Forgot your password?</button>
+        <p class="auth-note">Your tasks are private to your account.</p>
+      </div>
+    </section>
+  </main>
+
+  <main id="appView" class="app-layout hidden">
+    <aside class="sidebar">
+      <a href="/" class="brand sidebar-brand"><span class="brand-icon">✓</span><span>TaskFlow</span></a>
+      <div class="workspace-label">WORKSPACE</div>
+      <button class="nav-item active" data-page="tasks" type="button"><span>▦</span> My tasks</button>
+      <button class="nav-item" data-page="profile" type="button"><span>◎</span> My profile</button>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div id="sidebarAvatar" class="avatar">U</div>
+          <div class="user-copy"><strong id="sidebarName">Your account</strong><span id="sidebarEmail"></span></div>
+        </div>
+        <button id="logoutButton" class="nav-item logout" type="button"><span>↪</span> Sign out</button>
+      </div>
+    </aside>
+
+    <section class="main-panel">
+      <header class="topbar">
+        <div><span class="eyebrow">YOUR PERSONAL WORKSPACE</span><h1 id="pageHeading">My tasks</h1></div>
+        <div id="topAvatar" class="avatar avatar-large">U</div>
+      </header>
+
+      <section id="tasksPage">
+        <div class="welcome-row">
+          <div><h2 id="welcomeTitle">Let's get things done.</h2><p class="muted">Small steps lead to big progress.</p></div>
+          <button id="newTaskButton" class="btn btn-primary" type="button"><span>＋</span> New task</button>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-top"><span>Total tasks</span><span class="stat-icon purple">▦</span></div><strong id="totalCount">0</strong><span class="stat-caption">All your tasks</span></article>
+          <article class="stat-card"><div class="stat-top"><span>In progress</span><span class="stat-icon orange">◷</span></div><strong id="pendingCount">0</strong><span class="stat-caption">Still to do</span></article>
+          <article class="stat-card"><div class="stat-top"><span>Completed</span><span class="stat-icon green">✓</span></div><strong id="completedCount">0</strong><span class="stat-caption">Nicely done</span></article>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search your tasks..." aria-label="Search tasks"></div>
+          <select id="statusFilter" aria-label="Filter by status"><option value="all">All tasks</option><option value="pending">Pending</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
+          <select id="categoryFilter" aria-label="Filter by category"><option value="all">All categories</option></select>
+          <select id="sortFilter" aria-label="Sort tasks"><option value="newest">Newest first</option><option value="deadline">Deadline</option><option value="priority">Priority</option><option value="alphabetical">A to Z</option></select>
+        </div>
+
+        <div class="section-heading"><div><h2>Your tasks</h2><p class="muted" id="taskSubtitle">Everything you need to focus on.</p></div><span id="visibleCount" class="count-pill">0 tasks</span></div>
+        <div id="taskList" class="task-list"></div>
+        <div id="emptyState" class="empty-state hidden"><div class="empty-icon">✦</div><h3 id="emptyTitle">A fresh start.</h3><p id="emptyText">Create your first task and make today count.</p><button id="emptyAddButton" class="btn btn-primary" type="button">Create a task</button></div>
+      </section>
+
+      <section id="profilePage" class="hidden">
+        <div class="profile-card">
+          <div class="profile-header"><div id="profileAvatar" class="avatar profile-avatar">U</div><div><h2>Account settings</h2><p class="muted">Manage your TaskFlow profile.</p></div></div>
+          <form id="profileForm" class="form-stack">
+            <div class="field"><label for="profileName">Display name</label><input id="profileName" type="text" maxlength="80" required placeholder="Your name"></div>
+            <div class="field"><label for="profileEmail">Email address</label><input id="profileEmail" type="email" disabled></div>
+            <button class="btn btn-primary" type="submit">Save profile</button>
+          </form>
+          <div class="profile-divider"></div>
+          <h3>Account security</h3><p class="muted">You can sign out from this device at any time.</p>
+          <button id="profileLogout" class="btn btn-secondary" type="button">Sign out</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="taskDialog" class="task-dialog">
+    <form id="taskForm" class="dialog-content">
+      <div class="dialog-heading"><div><span class="eyebrow">TASK DETAILS</span><h2 id="dialogTitle">Create a task</h2></div><button id="closeDialog" class="icon-button" type="button" aria-label="Close">×</button></div>
+      <div class="field"><label for="taskTitle">Task title *</label><input id="taskTitle" required maxlength="160" placeholder="What needs to get done?"></div>
+      <div class="field"><label for="taskDescription">Description</label><textarea id="taskDescription" rows="3" maxlength="2000" placeholder="Add a few details (optional)"></textarea></div>
+      <div class="form-row">
+        <div class="field"><label for="taskCategory">Category</label><input id="taskCategory" maxlength="60" value="General" placeholder="e.g. Study"></div>
+        <div class="field"><label for="taskPriority">Priority</label><select id="taskPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+      </div>
+      <div class="field"><label for="taskDeadline">Deadline</label><input id="taskDeadline" type="date"></div>
+      <div class="dialog-actions"><button id="cancelTask" class="btn btn-secondary" type="button">Cancel</button><button id="saveTask" class="btn btn-primary" type="submit">Save task</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
